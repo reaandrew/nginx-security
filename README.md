@@ -23,3 +23,41 @@ root@c5eec8fbc239:/# ldd $(which nginx)
 ```
 
 This does not use the systemd daemon either, it runs NGINX in the foreground and relies on the daemon capabilities of Docker.  Not sure whether this is good, bad or of no concern yet.
+
+Looking at the number of running processes both this distroless nginx version and the `nginxinc/nginx-unprivileged` have the same amount of processes.  The following is the output from `docker top <container-name>`
+
+```shell
+~/Development/nginx-security main !1 ❯ docker top nginx-secure
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+systemd+            109226              109205              0                   13:06               ?                   00:00:00            nginx: master process /usr/sbin/nginx -g daemon off;
+systemd+            109259              109226              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109260              109226              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109261              109226              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109262              109226              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109263              109226              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109264              109226              0                   13:06               ?                   00:00:00            nginx: worker process
+
+```
+
+The `nginxinc/nginx-unprivileged` version
+
+```shell
+~/Development/nginx-security main !1 ❯ docker top happy_austin
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+systemd+            109461              109441              0                   13:06               ?                   00:00:00            nginx: master process nginx -g daemon off;
+systemd+            109523              109461              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109524              109461              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109525              109461              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109526              109461              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109527              109461              0                   13:06               ?                   00:00:00            nginx: worker process
+systemd+            109528              109461              0                   13:06               ?                   00:00:00            nginx: worker process
+```
+
+Looking at the size of the containers is a different story.  This distroless version is only ~28MB, which is over 100MB smaller than the `nginxinc/nginx-unprivileged`.
+
+```shell
+~/Development/nginx-security main ❯ docker images      
+REPOSITORY                                 TAG       IMAGE ID       CREATED             SIZE
+reaandrew/nginx-secure                     latest    c3230b0acdf8   About an hour ago   27.4MB
+nginxinc/nginx-unprivileged                latest    b85bccd0d388   3 days ago          142MB
+```
