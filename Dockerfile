@@ -18,7 +18,7 @@ COPY --from=build /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=build /var/log/nginx /var/log/nginx
 COPY --from=build /etc/nginx /etc/nginx
 COPY --from=build /usr/share/nginx/html /usr/share/nginx/html
-#COPY --from=build /var/cache/nginx /var/cache/nginx
+
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /etc/group /etc/group
 
