@@ -1,5 +1,7 @@
 FROM nginxinc/nginx-unprivileged as build
 
+RUN sed -i 's,/tmp/nginx.pid,/tmp/nginx/nginx.pid,' /etc/nginx/nginx.conf
+
 FROM gcr.io/distroless/base-debian10:nonroot
 
 COPY --from=build /lib/x86_64-linux-gnu/libdl.so.2 /lib/x86_64-linux-gnu/libdl.so.2

@@ -61,3 +61,54 @@ REPOSITORY                                 TAG       IMAGE ID       CREATED     
 reaandrew/nginx-secure                     latest    c3230b0acdf8   About an hour ago   27.4MB
 nginxinc/nginx-unprivileged                latest    b85bccd0d388   3 days ago          142MB
 ```
+
+2. Readonly Filesystem
+
+
+Really cool how they map to stdout and stderr the access and error log respecitively.
+
+```shell
+# forward request and error logs to docker log collector
+    && ln -sf /dev/stdout /var/log/nginx/access.log \
+    && ln -sf /dev/stderr /var/log/nginx/error.log \
+```
+
+[https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/stable/debian/Dockerfile](https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/stable/debian/Dockerfile)
+
+Created a Makefile for convenience when testing so I can build, run, kill and show the logs really easily
+
+```Makefile
+.PHONY: build
+build:
+	docker build -t reaandrew/nginx-secure .
+
+.PHONY: run
+run: build
+	docker run --name nginx-secure --read-only \
+		--mount type=tmpfs,destination=/tmp/proxy_temp,tmpfs-size=2m \
+		--mount type=tmpfs,destination=/tmp/client_temp,tmpfs-size=2m \
+		--mount type=tmpfs,destination=/tmp/fastcgi_temp,tmpfs-size=2m \
+		--mount type=tmpfs,destination=/tmp/uwsgi_temp,tmpfs-size=2m \
+		--mount type=tmpfs,destination=/tmp/scgi_temp,tmpfs-size=2m \
+		--mount type=tmpfs,destination=/tmp/nginx,tmpfs-size=1m \
+		-d -p 8080:8080 -t reaandrew/nginx-secure
+
+.PHONY: kill
+kill:
+	docker kill nginx-secure 2> /dev/null || :
+	docker rm nginx-secure 2> /dev/null || :
+
+.PHONY: logs
+logs:
+	docker logs nginx-secure
+```
+
+The only other thing I needed to change was where the PID file got created.  Currently it is created directly in the `/tmp` directory and this would mean I would have to map the entire `/tmp` directory to make it work which is too much in terms of scope; I want more control than that.  So I followed a similar approach to the Dockerfile from `docker-nginx-unprivileged` and simply put the path inside a child directory of nginx.  This means I now can create a tempfs just for that directory and know exactly which directories will be writeable.
+
+```Dockerfile
+FROM nginxinc/nginx-unprivileged as build
+
+RUN sed -i 's,/tmp/nginx.pid,/tmp/nginx/nginx.pid,' /etc/nginx/nginx.conf
+
+...
+```
