@@ -24,6 +24,8 @@ COPY --from=build /usr/share/nginx/html /usr/share/nginx/html
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /etc/group /etc/group
 
+COPY default.conf /etc/nginx/conf.d/
+
 
 USER nginx
 ENTRYPOINT ["/usr/sbin/nginx", "-g", "daemon off;"] 
