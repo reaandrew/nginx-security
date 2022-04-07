@@ -2,3 +2,5 @@ dist/
 todos/todos
 .idea
 main
+loadtest_report_*.html
+__pycache__
